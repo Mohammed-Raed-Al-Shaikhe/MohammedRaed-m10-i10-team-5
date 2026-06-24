@@ -1,17 +1,22 @@
-#!/usr/bin/env bash
-# Seed the running Neo4j container with the recipe fixture.
-#
-# Idempotent — `MERGE` and `CREATE CONSTRAINT IF NOT EXISTS` in seed.cypher
-# mean repeat runs do not duplicate nodes.
-#
-# TODO (Infra-Integration lead): implement this script.
-# Required:
-# - Read NEO4J_USER and NEO4J_PASSWORD from the environment (loaded
-#   from .env by docker compose).
-# - Pipe seed.cypher into the neo4j container via
-#   `docker compose exec -T neo4j cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD`.
-# - Print a one-line confirmation.
+# #!/usr/bin/env bash
+# set -euo pipefail
+
+# # Execute cypher-shell inside the running neo4j container and pipe the seed file in
+# docker compose exec -T neo4j \
+#   cypher-shell \
+#   -u "$NEO4J_USER" \
+#   -p "$NEO4J_PASSWORD" \
+#   < api/seed.cypher
+
+# echo "Neo4j seed completed successfully."
 
 set -euo pipefail
-echo "TODO: implement seed_neo4j.sh"
-exit 1
+
+if [ -f .env ]; then
+set -a; . ./.env; set +a
+fi
+
+docker compose exec -T neo4j cypher-shell \
+-u "$NEO4J_USER" -p "$NEO4J_PASSWORD" < api/seed.cypher
+
+echo "seed_neo4j: recipe graph seeded."
