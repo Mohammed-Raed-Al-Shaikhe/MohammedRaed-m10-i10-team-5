@@ -9,6 +9,8 @@ Generator called with `do_sample=False` for reproducibility.
 import re
 from typing import Tuple
 
+from typer import prompt
+
 PROMPT_TEMPLATE = """\
 You are answering a recipe question. Use ONLY the numbered sources below.
 Cite each claim with the source number in square brackets, e.g. [1].
@@ -19,6 +21,7 @@ Sources:
 
 Question: {question}
 Answer:"""
+
 
 SENTINEL = "I cannot answer this from the available sources"
 CITATION_PATTERN = re.compile(r"\[(\d+)\]")
@@ -83,8 +86,34 @@ def compose_rag(question: str, embedder, weaviate_client, generator, k: int = 4)
     if not retrieved:
         return {"answer": SENTINEL, "citations": [], "confidence": 0.0}
 
+    # prompt, numbered = assemble_prompt(question, retrieved)
+    # print("\n===== PROMPT =====")
+    # print(prompt)
+    # print("==================")
+    # raw = generator(prompt, max_new_tokens=256, do_sample=False)[0]["generated_text"]
+    # print("\n===== RAW OUTPUT =====")
+    # print(raw)
+    # print("======================")
+    # citations = extract_citations(raw, numbered)
+
     prompt, numbered = assemble_prompt(question, retrieved)
-    raw = generator(prompt, max_new_tokens=256, do_sample=False)[0]["generated_text"]
+
+    result = generator(
+        prompt,
+        max_new_tokens=256,
+        do_sample=False
+    )
+
+    print("\n===== PROMPT REPR =====")
+    print(repr(prompt))
+    print("=======================")
+
+    print("\n===== GENERATOR RESULT =====")
+    print(result)
+    print("============================")
+
+    raw = result[0]["generated_text"]
+
     citations = extract_citations(raw, numbered)
     if not citations:
         return {"answer": SENTINEL, "citations": [], "confidence": 0.0}
