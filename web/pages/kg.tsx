@@ -4,11 +4,13 @@ import type { KGRequest, KGResponse, UnsupportedQueryDetail } from "../lib/types
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// Phrased to match the W9B mapper's supported patterns AND seeded data,
+// so every chip returns rows instead of "not supported".
 const SUGGESTIONS = [
   "Find Sichuan recipes",
-  "Recipes with tofu",
-  "Under 30 minutes",
-  "Vegetarian dishes",
+  "Find recipes that use tofu",
+  "Find recipes with cooking time under 30 minutes",
+  "Find vegetarian recipes",
 ];
 
 export default function KgPage() {
