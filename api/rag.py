@@ -10,15 +10,17 @@ import re
 from typing import Tuple
 
 PROMPT_TEMPLATE = """\
-You are answering a recipe question. Use ONLY the numbered sources below.
-Cite each claim with the source number in square brackets, e.g. [1].
-If the sources do not contain the answer, say: I cannot answer this from the available sources.
+Answer the recipe question using ONLY the numbered sources below. Write a \
+clear, complete answer in one to three sentences, and cite the source you \
+used with its number in square brackets, for example [1]. If the sources do \
+not contain the answer, reply exactly: I cannot answer this from the available sources.
 
 Sources:
 {sources}
 
 Question: {question}
 Answer:"""
+
 
 SENTINEL = "I cannot answer this from the available sources"
 CITATION_PATTERN = re.compile(r"\[(\d+)\]")
@@ -84,8 +86,32 @@ def compose_rag(question: str, embedder, weaviate_client, generator, k: int = 4)
         return {"answer": SENTINEL, "citations": [], "confidence": 0.0}
 
     prompt, numbered = assemble_prompt(question, retrieved)
-    raw = generator(prompt, max_new_tokens=256, do_sample=False)[0]["generated_text"]
+
+    # Beam search (num_beams) yields noticeably more coherent prose than
+    # greedy decoding on flan-t5-base while staying deterministic
+    # (do_sample=False). max_new_tokens caps a runaway generation.
+    raw = generator(
+        prompt,
+        max_new_tokens=256,
+        num_beams=4,
+        do_sample=False,
+    )[0]["generated_text"].strip()
+
     citations = extract_citations(raw, numbered)
+
+    # flan-t5-base sometimes emits only a citation marker (e.g. "[1]") with
+    # no prose. When the model output carries no real word content, ground
+    # the answer extractively in the top-retrieved chunk so the caller always
+    # gets a usable, source-backed answer instead of a bare marker. This
+    # keeps the grounding contract intact — the answer text is verbatim
+    # source content and the citation resolves to that same chunk.
+    stripped = CITATION_PATTERN.sub("", raw).strip()
+    if not re.search(r"[A-Za-z]{3,}", stripped):
+        top = retrieved[0]
+        raw = f"{top['text'].strip()} [1]"
+        numbered = {1: top}
+        citations = extract_citations(raw, numbered)
+
     if not citations:
         return {"answer": SENTINEL, "citations": [], "confidence": 0.0}
 

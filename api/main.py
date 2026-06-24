@@ -2,12 +2,12 @@
 
 Discipline gates the autograder enforces:
 - Neo4j driver, Weaviate client, spaCy pipeline, and the flan-t5-base
-  generator are constructed exactly once per process inside `lifespan`.
+   9 generator are constructed exactly once per process inside `lifespan`.
 - `CORSMiddleware` registered with `allow_origins=[WEB_ORIGIN]`.
 - `/extract`, `/kg/query`, `/rag/answer` use Pydantic shapes from `models.py`.
 - `/kg/query` converts `UnsupportedQueryError` to 422 with structured detail.
 - `/readyz` probes Neo4j (`RETURN 1`) AND Weaviate (`client.is_ready()`)
-  within 2 seconds; failure → 503.
+    within 2 seconds; failure → 503.
 - `/healthz` does NOT touch Neo4j or Weaviate.
 """
 import os

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ExtractResponse } from "../lib/types";
+import type { ExtractRequest, ExtractResponse } from "../lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -14,10 +14,11 @@ export default function ExtractPage() {
     setError(null);
     setResult(null);
     try {
+      const payload: ExtractRequest = { text };
       const r = await fetch(`${API_URL}/extract`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify(payload),
       });
       if (r.status === 422) {
         setError("Text shape rejected by validation (empty or > 5000 chars).");
