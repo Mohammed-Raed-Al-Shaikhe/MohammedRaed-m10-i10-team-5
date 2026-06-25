@@ -85,10 +85,13 @@ def compose_rag(question: str, embedder, weaviate_client, generator, k: int = 4)
 
     prompt, numbered = assemble_prompt(question, retrieved)
     raw = generator(prompt, max_new_tokens=256, do_sample=False)[0]["generated_text"]
+    if raw.startswith(prompt):
+    raw = raw[len(prompt):].strip()
     citations = extract_citations(raw, numbered)
     if not citations:
         return {"answer": SENTINEL, "citations": [], "confidence": 0.0}
 
     confidence = sum(c["score"] for c in citations) / len(citations)
     confidence = max(0.0, min(1.0, confidence))
-    return {"answer": raw, "citations": citations, "confidence": confidence}
+    answer_text = raw
+    return {"answer": answer_text, "citations": citations, "confidence": confidence}
