@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { KGResponse, UnsupportedQueryDetail } from "../lib/types";
+import type { KGRequest, KGResponse, UnsupportedQueryDetail } from "../lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -16,10 +16,11 @@ export default function KgPage() {
     setSupported(null);
     setResult(null);
     try {
+      const payload: KGRequest = { question };
       const r = await fetch(`${API_URL}/kg/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify(payload),
       });
       if (r.status === 422) {
         const body = await r.json();

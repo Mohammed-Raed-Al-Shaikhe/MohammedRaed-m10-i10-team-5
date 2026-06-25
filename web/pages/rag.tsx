@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { RAGResponse } from "../lib/types";
+import type { RAGRequest, RAGResponse } from "../lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -14,10 +14,11 @@ export default function RagPage() {
     setError(null);
     setResult(null);
     try {
+      const payload: RAGRequest = { question, k: 4 };
       const r = await fetch(`${API_URL}/rag/answer`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, k: 4 }),
+        body: JSON.stringify(payload),
       });
       if (r.status === 422) {
         setError("Question shape rejected by validation.");
